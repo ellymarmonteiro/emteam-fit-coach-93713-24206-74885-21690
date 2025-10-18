@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Crown, Gift, AlertCircle } from "lucide-react";
+import { Check, Crown, Gift, AlertCircle, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -19,11 +19,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Price ID do produto no Stripe (deve ser configurado no painel do Stripe)
+const STRIPE_PRICE_ID = import.meta.env.VITE_STRIPE_PRICE_ID || 'price_1234567890';
+
 const Subscription = () => {
   const [coupon, setCoupon] = useState("");
+  const [couponValid, setCouponValid] = useState<boolean | null>(null);
+  const [couponInfo, setCouponInfo] = useState<any>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [discountRemaining, setDiscountRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [processingCheckout, setProcessingCheckout] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,13 +62,42 @@ const Subscription = () => {
     }
   };
 
-  const handleApplyCoupon = () => {
-    if (coupon) {
-      toast.success("Cupom aplicado com sucesso!");
+  const handleApplyCoupon = async () => {
+    if (!coupon.trim()) {
+      toast.error("Digite um código de cupom");
+      return;
+    }
+
+    setValidatingCoupon(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-coupon', {
+        body: { coupon_code: coupon.trim() }
+      });
+
+      if (error) throw error;
+
+      if (data.valid) {
+        setCouponValid(true);
+        setCouponInfo(data);
+        const discount = data.percent_off 
+          ? `${data.percent_off}% de desconto` 
+          : `R$ ${(data.amount_off / 100).toFixed(2)} de desconto`;
+        toast.success(`Cupom válido! ${discount}`);
+      } else {
+        setCouponValid(false);
+        setCouponInfo(null);
+        toast.error("Cupom inválido ou expirado");
+      }
+    } catch (error) {
+      console.error('Erro ao validar cupom:', error);
+      toast.error("Erro ao validar cupom. Tente novamente.");
+    } finally {
+      setValidatingCoupon(false);
     }
   };
 
   const handleSubscribe = async () => {
+    setProcessingCheckout(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -70,30 +106,27 @@ const Subscription = () => {
         return;
       }
 
-      // Atualizar status de assinatura
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ subscription_status: 'active' })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Trigger geração de planos
-      const { error: functionError } = await supabase.functions.invoke('generate-plans', {
-        body: { user_id: user.id }
+      // Criar checkout session no Stripe
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { 
+          user_id: user.id,
+          price_id: STRIPE_PRICE_ID,
+          coupon_code: couponValid ? coupon.trim() : null,
+        }
       });
 
-      if (functionError) throw functionError;
+      if (error) throw error;
 
-      toast.success("Assinatura realizada com sucesso!");
-      toast.info("Estamos gerando seus planos personalizados!");
-      
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
+      if (data && data.url) {
+        // Redirecionar para o Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('URL de checkout não retornada');
+      }
     } catch (error) {
-      console.error('Erro ao processar assinatura:', error);
-      toast.error("Erro ao processar assinatura. Tente novamente.");
+      console.error('Erro ao criar checkout:', error);
+      toast.error("Erro ao processar pagamento. Tente novamente.");
+      setProcessingCheckout(false);
     }
   };
 
@@ -329,19 +362,61 @@ const Subscription = () => {
               <div className="flex gap-2">
                 <Input
                   id="coupon"
-                  placeholder="Digite seu cupom"
+                  placeholder="Digite seu cupom (ex: TESTE100)"
                   value={coupon}
-                  onChange={(e) => setCoupon(e.target.value)}
+                  onChange={(e) => {
+                    setCoupon(e.target.value);
+                    setCouponValid(null);
+                    setCouponInfo(null);
+                  }}
+                  className={
+                    couponValid === true 
+                      ? "border-green-500" 
+                      : couponValid === false 
+                      ? "border-red-500" 
+                      : ""
+                  }
                 />
-                <Button onClick={handleApplyCoupon} variant="outline">
-                  Aplicar
+                <Button 
+                  onClick={handleApplyCoupon} 
+                  variant="outline"
+                  disabled={validatingCoupon || !coupon.trim()}
+                >
+                  {validatingCoupon ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Aplicar"
+                  )}
                 </Button>
               </div>
+              {couponValid === true && couponInfo && (
+                <p className="text-sm text-green-600 mt-2">
+                  ✓ Cupom aplicado: {couponInfo.percent_off 
+                    ? `${couponInfo.percent_off}% de desconto` 
+                    : `R$ ${(couponInfo.amount_off / 100).toFixed(2)} de desconto`}
+                </p>
+              )}
+              {couponValid === false && (
+                <p className="text-sm text-red-600 mt-2">
+                  ✗ Cupom inválido ou expirado
+                </p>
+              )}
             </div>
 
             {/* Subscribe Button */}
-            <Button onClick={handleSubscribe} className="w-full gradient-primary text-lg py-6">
-              Assinar Agora
+            <Button 
+              onClick={handleSubscribe} 
+              className="w-full gradient-primary text-lg py-6"
+              disabled={processingCheckout}
+            >
+              {processingCheckout ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                "Assinar Agora"
+              )}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">

@@ -14,16 +14,510 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      anamnese: {
+        Row: {
+          activity_level: string | null
+          allergies: string | null
+          availability: string | null
+          birth_date: string | null
+          cardiovascular: boolean | null
+          created_at: string | null
+          current_weight: number | null
+          diabetes: boolean | null
+          diet_preference: string | null
+          gender: string | null
+          has_injuries: string | null
+          height: number | null
+          hypertension: boolean | null
+          id: string
+          injuries: string | null
+          intolerances: string | null
+          is_active: string | null
+          kidney: boolean | null
+          main_goal: string | null
+          meals_per_day: string | null
+          measurements: Json | null
+          medications: string | null
+          motivation: string | null
+          notifications_consent: boolean | null
+          photo_consent: boolean | null
+          profession: string | null
+          sleep_hours: number | null
+          stress_level: string | null
+          supplements: string | null
+          target_timeline: string | null
+          target_weight: number | null
+          terms_accepted: boolean | null
+          training_duration: string | null
+          updated_at: string | null
+          user_id: string
+          water_intake: number | null
+        }
+        Insert: {
+          activity_level?: string | null
+          allergies?: string | null
+          availability?: string | null
+          birth_date?: string | null
+          cardiovascular?: boolean | null
+          created_at?: string | null
+          current_weight?: number | null
+          diabetes?: boolean | null
+          diet_preference?: string | null
+          gender?: string | null
+          has_injuries?: string | null
+          height?: number | null
+          hypertension?: boolean | null
+          id?: string
+          injuries?: string | null
+          intolerances?: string | null
+          is_active?: string | null
+          kidney?: boolean | null
+          main_goal?: string | null
+          meals_per_day?: string | null
+          measurements?: Json | null
+          medications?: string | null
+          motivation?: string | null
+          notifications_consent?: boolean | null
+          photo_consent?: boolean | null
+          profession?: string | null
+          sleep_hours?: number | null
+          stress_level?: string | null
+          supplements?: string | null
+          target_timeline?: string | null
+          target_weight?: number | null
+          terms_accepted?: boolean | null
+          training_duration?: string | null
+          updated_at?: string | null
+          user_id: string
+          water_intake?: number | null
+        }
+        Update: {
+          activity_level?: string | null
+          allergies?: string | null
+          availability?: string | null
+          birth_date?: string | null
+          cardiovascular?: boolean | null
+          created_at?: string | null
+          current_weight?: number | null
+          diabetes?: boolean | null
+          diet_preference?: string | null
+          gender?: string | null
+          has_injuries?: string | null
+          height?: number | null
+          hypertension?: boolean | null
+          id?: string
+          injuries?: string | null
+          intolerances?: string | null
+          is_active?: string | null
+          kidney?: boolean | null
+          main_goal?: string | null
+          meals_per_day?: string | null
+          measurements?: Json | null
+          medications?: string | null
+          motivation?: string | null
+          notifications_consent?: boolean | null
+          photo_consent?: boolean | null
+          profession?: string | null
+          sleep_hours?: number | null
+          stress_level?: string | null
+          supplements?: string | null
+          target_timeline?: string | null
+          target_weight?: number | null
+          terms_accepted?: boolean | null
+          training_duration?: string | null
+          updated_at?: string | null
+          user_id?: string
+          water_intake?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnese_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluations: {
+        Row: {
+          arm_circumference: number | null
+          blood_pressure: string | null
+          bmi: number | null
+          body_fat_percentage: number | null
+          calf_circumference: number | null
+          chest_circumference: number | null
+          created_at: string | null
+          goal: string | null
+          heart_rate: number | null
+          height: number | null
+          hip_circumference: number | null
+          id: string
+          leg_circumference: number | null
+          neck_circumference: number | null
+          notes: string | null
+          photos: Json | null
+          updated_at: string | null
+          user_id: string
+          waist_circumference: number | null
+          weight: number | null
+        }
+        Insert: {
+          arm_circumference?: number | null
+          blood_pressure?: string | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          calf_circumference?: number | null
+          chest_circumference?: number | null
+          created_at?: string | null
+          goal?: string | null
+          heart_rate?: number | null
+          height?: number | null
+          hip_circumference?: number | null
+          id?: string
+          leg_circumference?: number | null
+          neck_circumference?: number | null
+          notes?: string | null
+          photos?: Json | null
+          updated_at?: string | null
+          user_id: string
+          waist_circumference?: number | null
+          weight?: number | null
+        }
+        Update: {
+          arm_circumference?: number | null
+          blood_pressure?: string | null
+          bmi?: number | null
+          body_fat_percentage?: number | null
+          calf_circumference?: number | null
+          chest_circumference?: number | null
+          created_at?: string | null
+          goal?: string | null
+          heart_rate?: number | null
+          height?: number | null
+          hip_circumference?: number | null
+          id?: string
+          leg_circumference?: number | null
+          neck_circumference?: number | null
+          notes?: string | null
+          photos?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          waist_circumference?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_log: {
+        Row: {
+          error_message: string | null
+          id: string
+          message: string
+          sent_at: string | null
+          status: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          message: string
+          sent_at?: string | null
+          status?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          message?: string
+          sent_at?: string | null
+          status?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_settings: {
+        Row: {
+          created_at: string | null
+          daily_motivation: boolean | null
+          daily_motivation_time: string | null
+          device_tokens: Json | null
+          enable_all: boolean | null
+          goal_celebration: boolean | null
+          id: string
+          missed_workout: boolean | null
+          monthly_weigh_in: boolean | null
+          silence_days: number | null
+          updated_at: string | null
+          user_id: string
+          workout_reminder: boolean | null
+          workout_reminder_minutes: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_motivation?: boolean | null
+          daily_motivation_time?: string | null
+          device_tokens?: Json | null
+          enable_all?: boolean | null
+          goal_celebration?: boolean | null
+          id?: string
+          missed_workout?: boolean | null
+          monthly_weigh_in?: boolean | null
+          silence_days?: number | null
+          updated_at?: string | null
+          user_id: string
+          workout_reminder?: boolean | null
+          workout_reminder_minutes?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_motivation?: boolean | null
+          daily_motivation_time?: string | null
+          device_tokens?: Json | null
+          enable_all?: boolean | null
+          goal_celebration?: boolean | null
+          id?: string
+          missed_workout?: boolean | null
+          monthly_weigh_in?: boolean | null
+          silence_days?: number | null
+          updated_at?: string | null
+          user_id?: string
+          workout_reminder?: boolean | null
+          workout_reminder_minutes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          schedule_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          schedule_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          schedule_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          content: Json
+          created_at: string | null
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["plan_status"] | null
+          type: Database["public"]["Enums"]["plan_type"]
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          content: Json
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["plan_status"] | null
+          type: Database["public"]["Enums"]["plan_type"]
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          content?: Json
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["plan_status"] | null
+          type?: Database["public"]["Enums"]["plan_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          current_period_end: string | null
+          discount_remaining: number | null
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          plan_status: Database["public"]["Enums"]["plan_status"] | null
+          referral_code: string | null
+          referred_by: string | null
+          role: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          discount_remaining?: number | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          plan_status?: Database["public"]["Enums"]["plan_status"] | null
+          referral_code?: string | null
+          referred_by?: string | null
+          role?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          discount_remaining?: number | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          plan_status?: Database["public"]["Enums"]["plan_status"] | null
+          referral_code?: string | null
+          referred_by?: string | null
+          role?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          discount_applied: boolean | null
+          id: string
+          referred_id: string
+          referrer_id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discount_applied?: boolean | null
+          id?: string
+          referred_id: string
+          referrer_id: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discount_applied?: boolean | null
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_notification: {
+        Args: { p_message: string; p_type: string; p_user_id: string }
+        Returns: string
+      }
+      generate_referral_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      schedule_workout_reminder: {
+        Args: {
+          p_reminder_minutes: number
+          p_user_id: string
+          p_workout_time: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      plan_status: "pending" | "approved" | "rejected"
+      plan_type: "workout" | "nutrition"
+      subscription_status: "pending" | "active" | "cancelled" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +644,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      plan_status: ["pending", "approved", "rejected"],
+      plan_type: ["workout", "nutrition"],
+      subscription_status: ["pending", "active", "cancelled", "expired"],
+    },
   },
 } as const

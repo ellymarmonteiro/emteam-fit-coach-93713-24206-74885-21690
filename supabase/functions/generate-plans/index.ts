@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
@@ -5,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,6 +24,10 @@ serve(async (req) => {
     
     console.log('Gerando planos para usuário:', user_id);
 
+    if (!openAIApiKey) {
+      throw new Error('OPENAI_API_KEY não está configurada');
+    }
+
     // Buscar dados do usuário
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
@@ -33,154 +40,222 @@ serve(async (req) => {
       throw profileError;
     }
 
-    // Mock de geração de plano de treino
-    const workoutPlan = {
-      objetivo: "Hipertrofia",
-      frequencia: "5x por semana",
-      duracao: "60-90 minutos",
-      treinos: [
-        {
-          dia: "Segunda-feira",
-          foco: "Peito e Tríceps",
-          exercicios: [
-            { nome: "Supino Reto", series: 4, repeticoes: "8-12", descanso: "90s" },
-            { nome: "Supino Inclinado", series: 3, repeticoes: "10-12", descanso: "90s" },
-            { nome: "Crucifixo", series: 3, repeticoes: "12-15", descanso: "60s" },
-            { nome: "Tríceps Testa", series: 3, repeticoes: "10-12", descanso: "60s" },
-            { nome: "Tríceps Corda", series: 3, repeticoes: "12-15", descanso: "60s" }
-          ]
-        },
-        {
-          dia: "Terça-feira",
-          foco: "Costas e Bíceps",
-          exercicios: [
-            { nome: "Barra Fixa", series: 4, repeticoes: "máximo", descanso: "90s" },
-            { nome: "Remada Curvada", series: 4, repeticoes: "8-12", descanso: "90s" },
-            { nome: "Pulldown", series: 3, repeticoes: "10-12", descanso: "60s" },
-            { nome: "Rosca Direta", series: 3, repeticoes: "10-12", descanso: "60s" },
-            { nome: "Rosca Martelo", series: 3, repeticoes: "12-15", descanso: "60s" }
-          ]
-        },
-        {
-          dia: "Quarta-feira",
-          foco: "Pernas",
-          exercicios: [
-            { nome: "Agachamento", series: 4, repeticoes: "8-12", descanso: "120s" },
-            { nome: "Leg Press", series: 4, repeticoes: "10-15", descanso: "90s" },
-            { nome: "Cadeira Extensora", series: 3, repeticoes: "12-15", descanso: "60s" },
-            { nome: "Cadeira Flexora", series: 3, repeticoes: "12-15", descanso: "60s" },
-            { nome: "Panturrilha", series: 4, repeticoes: "15-20", descanso: "60s" }
-          ]
-        },
-        {
-          dia: "Quinta-feira",
-          foco: "Ombros e Abdômen",
-          exercicios: [
-            { nome: "Desenvolvimento", series: 4, repeticoes: "8-12", descanso: "90s" },
-            { nome: "Elevação Lateral", series: 3, repeticoes: "12-15", descanso: "60s" },
-            { nome: "Elevação Frontal", series: 3, repeticoes: "12-15", descanso: "60s" },
-            { nome: "Abdominais", series: 4, repeticoes: "15-20", descanso: "45s" },
-            { nome: "Prancha", series: 3, repeticoes: "45-60s", descanso: "60s" }
-          ]
-        },
-        {
-          dia: "Sexta-feira",
-          foco: "Treino Completo",
-          exercicios: [
-            { nome: "Supino", series: 3, repeticoes: "10-12", descanso: "90s" },
-            { nome: "Remada", series: 3, repeticoes: "10-12", descanso: "90s" },
-            { nome: "Agachamento", series: 3, repeticoes: "10-12", descanso: "90s" },
-            { nome: "Desenvolvimento", series: 3, repeticoes: "10-12", descanso: "90s" }
-          ]
-        }
-      ],
-      observacoes: "Aqueça bem antes de cada treino. Mantenha boa forma nos exercícios. Aumente a carga progressivamente."
+    // Buscar anamnese
+    const { data: anamnese, error: anamneseError } = await supabaseClient
+      .from('anamnese')
+      .select('*')
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Buscar última avaliação
+    const { data: lastEvaluation, error: evaluationError } = await supabaseClient
+      .from('evaluations')
+      .select('*')
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Construir contexto para a IA
+    const userContext = {
+      perfil: {
+        nome: profile.full_name,
+        email: profile.email,
+      },
+      anamnese: anamnese || null,
+      ultimaAvaliacao: lastEvaluation || null,
     };
 
-    // Mock de plano alimentar
-    const nutritionPlan = {
-      objetivo: "Ganho de massa muscular",
-      calorias_diarias: "2800-3000 kcal",
-      distribuicao: {
-        proteinas: "35%",
-        carboidratos: "45%",
-        gorduras: "20%"
-      },
-      refeicoes: [
+    console.log('Contexto do usuário:', JSON.stringify(userContext, null, 2));
+
+    // Prompt para geração do plano de treino
+    const workoutPrompt = `Você é um personal trainer profissional e experiente. Crie um plano de treino DETALHADO e PERSONALIZADO com base nos dados do aluno.
+
+DADOS DO ALUNO:
+${JSON.stringify(userContext, null, 2)}
+
+INSTRUÇÕES:
+- Crie um plano de 5 dias por semana
+- Seja específico em séries, repetições e tempo de descanso
+- Considere o nível de condicionamento do aluno
+- Inclua aquecimento e alongamento
+- Use tom motivacional e profissional
+- Adapte os exercícios às condições físicas e objetivos do aluno
+- Se houver lesões, adapte os exercícios adequadamente
+
+FORMATO DE RESPOSTA (JSON):
+{
+  "objetivo": "descrição do objetivo principal",
+  "frequencia": "X dias por semana",
+  "duracao": "tempo estimado por sessão",
+  "treinos": [
+    {
+      "dia": "nome do dia",
+      "foco": "grupo muscular",
+      "exercicios": [
         {
-          nome: "Café da Manhã (7h)",
-          opcoes: [
-            "3 ovos mexidos + 2 fatias de pão integral + 1 banana + café",
-            "Panqueca de aveia (100g aveia + 3 ovos) + mel + frutas",
-            "Tapioca (2 unidades) + queijo branco + presunto + suco natural"
-          ]
-        },
-        {
-          nome: "Lanche da Manhã (10h)",
-          opcoes: [
-            "Whey protein + 1 fruta + castanhas (30g)",
-            "Iogurte grego (200g) + granola + frutas",
-            "Sanduíche natural + suco verde"
-          ]
-        },
-        {
-          nome: "Almoço (13h)",
-          opcoes: [
-            "Peito de frango grelhado (200g) + arroz integral (150g) + feijão + salada + legumes",
-            "Carne vermelha magra (180g) + batata doce (200g) + brócolis + salada",
-            "Peixe grelhado (200g) + quinoa (150g) + vegetais refogados"
-          ]
-        },
-        {
-          nome: "Lanche da Tarde (16h)",
-          opcoes: [
-            "Pão integral + pasta de amendoim + banana",
-            "Vitamina de frutas + aveia + whey",
-            "Tapioca + queijo cottage + geleia"
-          ]
-        },
-        {
-          nome: "Pré-Treino (18h)",
-          opcoes: [
-            "Batata doce (150g) + whey protein",
-            "Banana + pasta de amendoim + café",
-            "Pão integral + mel + café"
-          ]
-        },
-        {
-          nome: "Pós-Treino (20h)",
-          opcoes: [
-            "Whey protein + dextrose + creatina",
-            "Frango (150g) + arroz branco (100g)",
-            "Ovo cozido (3 unidades) + batata"
-          ]
-        },
-        {
-          nome: "Jantar (21h)",
-          opcoes: [
-            "Salmão grelhado (180g) + legumes + salada",
-            "Peito de frango (180g) + abobrinha refogada + salada",
-            "Omelete (4 ovos) + queijo + vegetais + salada"
-          ]
-        },
-        {
-          nome: "Ceia (23h)",
-          opcoes: [
-            "Caseína ou cottage (200g)",
-            "Ovos cozidos (2-3 unidades)",
-            "Iogurte natural + oleaginosas"
-          ]
+          "nome": "nome do exercício",
+          "series": número,
+          "repeticoes": "faixa de repetições",
+          "descanso": "tempo de descanso",
+          "observacoes": "dicas específicas"
         }
-      ],
-      suplementacao: [
-        "Whey Protein: 2-3 doses ao dia",
-        "Creatina: 5g ao dia",
-        "Multivitamínico: 1x ao dia",
-        "Ômega 3: 2-3g ao dia",
-        "Vitamina D3: conforme orientação"
-      ],
-      observacoes: "Beba pelo menos 3 litros de água por dia. Ajuste as porções conforme sua fome e resultados. Priorize alimentos naturais."
-    };
+      ]
+    }
+  ],
+  "observacoes": "orientações gerais importantes"
+}`;
+
+    // Chamar OpenAI para gerar plano de treino
+    console.log('Chamando OpenAI para gerar plano de treino...');
+    const workoutResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'Você é um personal trainer profissional especializado em criar planos de treino personalizados. Sempre responda em formato JSON válido.' 
+          },
+          { role: 'user', content: workoutPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!workoutResponse.ok) {
+      const error = await workoutResponse.text();
+      console.error('Erro na chamada OpenAI (treino):', error);
+      throw new Error(`Erro ao gerar plano de treino: ${error}`);
+    }
+
+    const workoutApiData = await workoutResponse.json();
+    const workoutContent = workoutApiData.choices[0].message.content;
+    console.log('Resposta OpenAI (treino):', workoutContent);
+    
+    let workoutPlan;
+    try {
+      // Tentar parsear o JSON da resposta
+      const jsonMatch = workoutContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        workoutPlan = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Resposta não contém JSON válido');
+      }
+    } catch (parseError) {
+      console.error('Erro ao parsear resposta do treino:', parseError);
+      // Fallback para um plano básico se o parsing falhar
+      workoutPlan = {
+        objetivo: "Plano personalizado gerado",
+        frequencia: "5x por semana",
+        duracao: "60-90 minutos",
+        treinos: [],
+        observacoes: workoutContent,
+      };
+    }
+
+    // Prompt para geração do plano alimentar
+    const nutritionPrompt = `Você é um nutricionista esportivo especializado. Crie um plano alimentar DETALHADO e PERSONALIZADO com base nos dados do aluno.
+
+DADOS DO ALUNO:
+${JSON.stringify(userContext, null, 2)}
+
+INSTRUÇÕES:
+- Crie um plano com 6-8 refeições por dia
+- Calcule calorias apropriadas para o objetivo
+- Especifique distribuição de macronutrientes
+- Ofereça 2-3 opções por refeição
+- Considere restrições alimentares e alergias
+- Inclua sugestões de suplementação
+- Use tom profissional e acolhedor
+- Adapte às preferências alimentares do aluno
+
+FORMATO DE RESPOSTA (JSON):
+{
+  "objetivo": "descrição do objetivo nutricional",
+  "calorias_diarias": "faixa de calorias",
+  "distribuicao": {
+    "proteinas": "percentual",
+    "carboidratos": "percentual",
+    "gorduras": "percentual"
+  },
+  "refeicoes": [
+    {
+      "nome": "nome da refeição e horário",
+      "opcoes": [
+        "opção 1 detalhada",
+        "opção 2 detalhada",
+        "opção 3 detalhada"
+      ]
+    }
+  ],
+  "suplementacao": [
+    "suplemento 1: dosagem e horário",
+    "suplemento 2: dosagem e horário"
+  ],
+  "observacoes": "orientações gerais importantes sobre hidratação e ajustes"
+}`;
+
+    // Chamar OpenAI para gerar plano alimentar
+    console.log('Chamando OpenAI para gerar plano alimentar...');
+    const nutritionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'Você é um nutricionista esportivo especializado em criar planos alimentares personalizados. Sempre responda em formato JSON válido.' 
+          },
+          { role: 'user', content: nutritionPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!nutritionResponse.ok) {
+      const error = await nutritionResponse.text();
+      console.error('Erro na chamada OpenAI (nutrição):', error);
+      throw new Error(`Erro ao gerar plano alimentar: ${error}`);
+    }
+
+    const nutritionApiData = await nutritionResponse.json();
+    const nutritionContent = nutritionApiData.choices[0].message.content;
+    console.log('Resposta OpenAI (nutrição):', nutritionContent);
+    
+    let nutritionPlan;
+    try {
+      // Tentar parsear o JSON da resposta
+      const jsonMatch = nutritionContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        nutritionPlan = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Resposta não contém JSON válido');
+      }
+    } catch (parseError) {
+      console.error('Erro ao parsear resposta da nutrição:', parseError);
+      // Fallback para um plano básico se o parsing falhar
+      nutritionPlan = {
+        objetivo: "Plano personalizado gerado",
+        calorias_diarias: "Calculadas individualmente",
+        distribuicao: {},
+        refeicoes: [],
+        suplementacao: [],
+        observacoes: nutritionContent,
+      };
+    }
 
     // Inserir plano de treino
     const { data: workoutData, error: workoutError } = await supabaseClient

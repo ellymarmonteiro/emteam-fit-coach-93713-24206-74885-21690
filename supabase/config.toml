@@ -1,1 +1,16 @@
 project_id = "mhapxuzokpjwrnlaxofj"
+
+[functions.generate-plans]
+verify_jwt = false
+
+[functions.create-checkout-session]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.validate-coupon]
+verify_jwt = false
+
+[functions.create-coach-user]
+verify_jwt = false

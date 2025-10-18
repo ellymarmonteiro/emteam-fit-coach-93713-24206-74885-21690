@@ -17,6 +17,7 @@ import Referrals from "./pages/Referrals";
 import Profile from "./pages/Profile";
 import Exams from "./pages/Exams";
 import Subscription from "./pages/Subscription";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import Evaluation from "./pages/Evaluation";
 import Notifications from "./pages/Notifications";
 import CoachAuth from "./pages/coach/CoachAuth";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/exams" element={<Exams />} />
             <Route path="/subscription" element={<Subscription />} />
+            <Route path="/subscription-success" element={<SubscriptionSuccess />} />
             <Route path="/coach/auth" element={<CoachAuth />} />
             <Route path="/coach/dashboard" element={<CoachDashboard />} />
             <Route path="/coach/students" element={<CoachStudents />} />
