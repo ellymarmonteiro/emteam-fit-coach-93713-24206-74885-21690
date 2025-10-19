@@ -118,10 +118,13 @@ const Subscription = () => {
       if (error) throw error;
 
       if (data && data.url) {
-        // Redirecionar para o Stripe Checkout
+        // Log para debug
+        console.log('Redirecionando para checkout:', data.url);
+        
+        // Redirecionar para o Stripe Checkout na mesma janela
         window.location.href = data.url;
       } else {
-        throw new Error('URL de checkout não retornada');
+        throw new Error('URL de checkout não retornada pelo servidor');
       }
     } catch (error) {
       console.error('Erro ao criar checkout:', error);

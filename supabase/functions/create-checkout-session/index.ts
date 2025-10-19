@@ -80,8 +80,8 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'http://localhost:5173'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'http://localhost:5173'}/subscription`,
+      success_url: `${req.headers.get('origin') || 'http://localhost:5173'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin') || 'http://localhost:5173'}/subscription`,
       metadata: {
         user_id: user_id,
       },
@@ -109,7 +109,12 @@ serve(async (req) => {
     // Criar checkout session
     const session = await stripe.checkout.sessions.create(checkoutParams);
 
-    console.log('Checkout session criada:', session.id);
+    console.log('Checkout session criada:', session.id, session.url);
+
+    // SEMPRE retornar a URL para redirecionamento direto
+    if (!session.url) {
+      throw new Error('URL do checkout não foi gerada');
+    }
 
     return new Response(
       JSON.stringify({ 

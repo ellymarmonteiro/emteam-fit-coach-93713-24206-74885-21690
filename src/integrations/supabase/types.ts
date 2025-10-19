@@ -139,6 +139,36 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          reason: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       evaluations: {
         Row: {
           arm_circumference: number | null
@@ -215,6 +245,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      exercises: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          equipment: string[] | null
+          id: string
+          level: string | null
+          muscle_groups: string[] | null
+          name: string
+          thumbnail_path: string | null
+          updated_at: string | null
+          video_path: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          equipment?: string[] | null
+          id?: string
+          level?: string | null
+          muscle_groups?: string[] | null
+          name: string
+          thumbnail_path?: string | null
+          updated_at?: string | null
+          video_path?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          equipment?: string[] | null
+          id?: string
+          level?: string | null
+          muscle_groups?: string[] | null
+          name?: string
+          thumbnail_path?: string | null
+          updated_at?: string | null
+          video_path?: string | null
+        }
+        Relationships: []
       }
       notification_log: {
         Row: {
@@ -342,6 +417,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      plan_exercises: {
+        Row: {
+          created_at: string | null
+          day_of_week: number | null
+          exercise_id: string | null
+          exercise_name: string
+          id: string
+          notes: string | null
+          order_index: number | null
+          plan_id: string
+          reps: string | null
+          rest_seconds: number | null
+          sets: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week?: number | null
+          exercise_id?: string | null
+          exercise_name: string
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          plan_id: string
+          reps?: string | null
+          rest_seconds?: number | null
+          sets?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number | null
+          exercise_id?: string | null
+          exercise_name?: string
+          id?: string
+          notes?: string | null
+          order_index?: number | null
+          plan_id?: string
+          reps?: string | null
+          rest_seconds?: number | null
+          sets?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_exercises_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {
@@ -492,6 +624,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -505,6 +658,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       schedule_workout_reminder: {
         Args: {
           p_reminder_minutes: number
@@ -515,6 +675,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "coach" | "student"
       plan_status: "pending" | "approved" | "rejected"
       plan_type: "workout" | "nutrition"
       subscription_status: "pending" | "active" | "cancelled" | "expired"
@@ -645,6 +806,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "coach", "student"],
       plan_status: ["pending", "approved", "rejected"],
       plan_type: ["workout", "nutrition"],
       subscription_status: ["pending", "active", "cancelled", "expired"],

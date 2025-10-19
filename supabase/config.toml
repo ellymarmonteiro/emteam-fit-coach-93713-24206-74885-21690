@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.create-coach-user]
 verify_jwt = false
+
+[functions.delete-user]
+verify_jwt = false
+
+[functions.get-exercise-video]
+verify_jwt = false

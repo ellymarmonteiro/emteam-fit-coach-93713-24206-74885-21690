@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Home, Users, Brain, TrendingUp, Settings, LogOut, Gift, Trophy } from "lucide-react";
+import { Home, Users, Brain, TrendingUp, Settings, LogOut, Gift, Trophy, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +78,15 @@ const CoachNavbar = () => {
             >
               <Trophy className="w-4 h-4" />
               Ranking
+            </Link>
+            <Link
+              to="/coach/exercises"
+              className={`flex items-center gap-2 transition-colors ${
+                isActive("/coach/exercises") ? "text-primary" : "text-muted-foreground hover:text-primary"
+              }`}
+            >
+              <Dumbbell className="w-4 h-4" />
+              Exercícios
             </Link>
             <Link
               to="/coach/settings"

@@ -2,13 +2,55 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, User, Mail, Phone, Calendar, Target, TrendingUp } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Calendar, Target, TrendingUp, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import CoachNavbar from "@/components/CoachNavbar";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const CoachStudentProfile = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [deleting, setDeleting] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+
+  const handleDeleteUser = async () => {
+    if (!id) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: { 
+          user_id: id,
+          reason: deleteReason || "Cancelamento solicitado pelo coach"
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("Usuário deletado com sucesso!");
+      navigate("/coach/students");
+    } catch (error: any) {
+      console.error('Erro ao deletar usuário:', error);
+      toast.error(error.message || "Erro ao deletar usuário");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Mock student data - in real app would fetch from API
   const student = {
@@ -72,6 +114,48 @@ const CoachStudentProfile = () => {
             >
               Editar Plano
             </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Deletar Aluno
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                  <AlertDialogDescription className="space-y-4">
+                    <p>Tem certeza que deseja deletar o cadastro de <strong>{student.name}</strong>?</p>
+                    <p className="text-destructive font-semibold">Esta ação é IRREVERSÍVEL e vai:</p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Remover o usuário completamente</li>
+                      <li>Deletar todos os planos e avaliações</li>
+                      <li>Apagar histórico e dados pessoais</li>
+                    </ul>
+                    <div className="space-y-2">
+                      <Label htmlFor="reason">Motivo (opcional):</Label>
+                      <Input
+                        id="reason"
+                        placeholder="Ex: Solicitação do aluno, inadimplência..."
+                        value={deleteReason}
+                        onChange={(e) => setDeleteReason(e.target.value)}
+                      />
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteUser}
+                    disabled={deleting}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    {deleting ? "Deletando..." : "Sim, Deletar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
 
           {/* Contact Info */}

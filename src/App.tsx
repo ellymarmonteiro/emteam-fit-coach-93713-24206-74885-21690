@@ -33,6 +33,8 @@ import CoachReferrals from "./pages/coach/CoachReferrals";
 import CoachRanking from "./pages/coach/CoachRanking";
 import NotFound from "./pages/NotFound";
 
+import CoachExercises from "./pages/coach/CoachExercises";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -70,6 +72,7 @@ const App = () => (
             <Route path="/coach/referrals" element={<CoachReferrals />} />
             <Route path="/coach/ranking" element={<CoachRanking />} />
             <Route path="/coach/settings" element={<CoachSettings />} />
+            <Route path="/coach/exercises" element={<CoachExercises />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
