@@ -19,13 +19,13 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
+        const { data: roles } = await supabase
+          .from('user_roles')
           .select('role')
-          .eq('id', session.user.id)
-          .single();
+          .eq('user_id', session.user.id)
+          .in('role', ['coach', 'admin']);
         
-        if (profile?.role === 'coach') {
+        if (roles && roles.length > 0) {
           navigate("/coach/dashboard");
         } else {
           navigate("/dashboard");
@@ -53,15 +53,15 @@ const Auth = () => {
       }
 
       if (data.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
+        const { data: roles } = await supabase
+          .from('user_roles')
           .select('role')
-          .eq('id', data.user.id)
-          .single();
+          .eq('user_id', data.user.id)
+          .in('role', ['coach', 'admin']);
         
         toast.success("Login realizado com sucesso!");
         
-        if (profile?.role === 'coach') {
+        if (roles && roles.length > 0) {
           navigate("/coach/dashboard");
         } else {
           navigate("/dashboard");
