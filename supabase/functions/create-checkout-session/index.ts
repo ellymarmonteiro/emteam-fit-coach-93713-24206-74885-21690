@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
@@ -20,7 +19,7 @@ serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey, {
-      apiVersion: '2023-10-16',
+      apiVersion: '2024-11-20.acacia',
       httpClient: Stripe.createFetchHttpClient(),
     });
 
@@ -32,10 +31,11 @@ serve(async (req) => {
     const { user_id, price_id, coupon_code } = await req.json();
 
     if (!user_id || !price_id) {
+      console.error('Missing required fields:', { user_id, price_id });
       throw new Error('user_id e price_id são obrigatórios');
     }
 
-    console.log('Criando checkout session para:', { user_id, price_id, coupon_code });
+    console.log('🚀 Criando checkout session para:', { user_id, price_id, has_coupon: !!coupon_code });
 
     // Buscar dados do usuário
     const { data: profile, error: profileError } = await supabaseClient
@@ -45,8 +45,11 @@ serve(async (req) => {
       .single();
 
     if (profileError || !profile) {
-      throw new Error('Usuário não encontrado');
+      console.error('Profile not found:', profileError);
+      throw new Error('Usuário não encontrado no banco de dados');
     }
+
+    console.log('✅ Perfil encontrado:', { email: profile.email, name: profile.full_name });
 
     // Criar ou recuperar customer no Stripe
     let customerId = profile.stripe_customer_id;
@@ -67,7 +70,9 @@ serve(async (req) => {
         .update({ stripe_customer_id: customerId })
         .eq('id', user_id);
 
-      console.log('Customer criado no Stripe:', customerId);
+      console.log('✅ Customer criado no Stripe:', customerId);
+    } else {
+      console.log('✅ Customer existente encontrado:', customerId);
     }
 
     // Preparar parâmetros do checkout
@@ -107,13 +112,24 @@ serve(async (req) => {
     }
 
     // Criar checkout session
+    console.log('📋 Criando session com params:', {
+      customer: customerId,
+      mode: 'subscription',
+      price_id,
+      has_discount: !!checkoutParams.discounts
+    });
+
     const session = await stripe.checkout.sessions.create(checkoutParams);
 
-    console.log('Checkout session criada:', session.id, session.url);
+    console.log('✅ Checkout session criada com sucesso!');
+    console.log('   Session ID:', session.id);
+    console.log('   Session URL:', session.url);
+    console.log('   Status:', session.status);
 
     // SEMPRE retornar a URL para redirecionamento direto
     if (!session.url) {
-      throw new Error('URL do checkout não foi gerada');
+      console.error('❌ Session criada mas URL não foi gerada!', session);
+      throw new Error('URL do checkout não foi gerada pelo Stripe');
     }
 
     return new Response(
@@ -128,10 +144,18 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Erro ao criar checkout session:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.error('❌ ERRO ao criar checkout session:');
+    console.error('   Tipo:', error.constructor.name);
+    console.error('   Mensagem:', error.message);
+    console.error('   Stack:', error.stack);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao processar pagamento';
+    
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
