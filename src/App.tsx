@@ -42,22 +42,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { MAINTENANCE } from "./config";
 
 const App = () => {
-  const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Verifica papel admin no servidor via função SQL
+        // Check admin role via user_roles query
         try {
-          const { data } = await supabase.rpc('has_role', { _user_id: session.user.id, _role: 'admin' as any });
-          setIsAdmin(!!data);
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id);
+          setIsAdmin(!!roles?.some(r => r.role === 'admin'));
         } catch (_) {
           setIsAdmin(false);
         }
       }
-      setLoading(false);
     };
     init();
   }, []);

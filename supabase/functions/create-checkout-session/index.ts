@@ -23,6 +23,11 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     // Validar Authorization JWT
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -50,6 +55,7 @@ serve(async (req) => {
       });
     }
 
+    if (!user_id || !price_id) {
       console.error('Missing required fields:', { user_id, price_id });
       throw new Error('user_id e price_id são obrigatórios');
     }
@@ -162,18 +168,18 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ ERRO ao criar checkout session:');
-    console.error('   Tipo:', error.constructor.name);
-    console.error('   Mensagem:', error.message);
-    console.error('   Stack:', error.stack);
+    console.error('   Tipo:', error?.constructor?.name || 'Unknown');
+    console.error('   Mensagem:', error?.message || 'No message');
+    console.error('   Stack:', error?.stack || 'No stack');
     
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao processar pagamento';
     
     return new Response(
       JSON.stringify({ 
         error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: Deno.env.get('DENO_DEPLOYMENT_ID') ? undefined : error?.stack
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
