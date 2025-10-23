@@ -23,14 +23,33 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    // Validar Authorization JWT
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userErr } = await supabaseClient.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
 
     const { user_id, price_id, coupon_code } = await req.json();
 
-    if (!user_id || !price_id) {
+    // Garantir que o user_id enviado corresponde ao token
+    if (user_id && user_id !== userData.user.id) {
+      return new Response(JSON.stringify({ error: 'User mismatch' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
       console.error('Missing required fields:', { user_id, price_id });
       throw new Error('user_id e price_id são obrigatórios');
     }

@@ -37,49 +37,89 @@ import CoachExercises from "./pages/coach/CoachExercises";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/onboarding/gender" element={<Gender />} />
-            <Route path="/onboarding/assessment" element={<Assessment />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/workouts" element={<Workouts />} />
-            <Route path="/nutrition" element={<Nutrition />} />
-            <Route path="/measurements" element={<Measurements />} />
-            <Route path="/evaluation" element={<Evaluation />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/referrals" element={<Referrals />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/exams" element={<Exams />} />
-            <Route path="/subscription" element={<Subscription />} />
-            <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-            <Route path="/coach/auth" element={<CoachAuth />} />
-            <Route path="/coach/dashboard" element={<CoachDashboard />} />
-            <Route path="/coach/students" element={<CoachStudents />} />
-            <Route path="/coach/student/:id" element={<CoachStudentProfile />} />
-            <Route path="/coach/student/:id/edit" element={<CoachStudentEdit />} />
-            <Route path="/coach/pending-plans" element={<CoachPendingPlans />} />
-            <Route path="/coach/ai-training" element={<CoachAITraining />} />
-            <Route path="/coach/progress" element={<CoachProgress />} />
-            <Route path="/coach/referrals" element={<CoachReferrals />} />
-            <Route path="/coach/ranking" element={<CoachRanking />} />
-            <Route path="/coach/settings" element={<CoachSettings />} />
-            <Route path="/coach/exercises" element={<CoachExercises />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { MAINTENANCE } from "./config";
+
+const App = () => {
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Verifica papel admin no servidor via função SQL
+        try {
+          const { data } = await supabase.rpc('has_role', { _user_id: session.user.id, _role: 'admin' as any });
+          setIsAdmin(!!data);
+        } catch (_) {
+          setIsAdmin(false);
+        }
+      }
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  if (MAINTENANCE && !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-xl text-center space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
+            <span className="text-primary font-bold">EM</span>
+          </div>
+          <h1 className="text-3xl font-bold">Em manutenção — correções em andamento</h1>
+          <p className="text-muted-foreground">Apenas administradores autenticados podem acessar temporariamente.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/onboarding/gender" element={<Gender />} />
+              <Route path="/onboarding/assessment" element={<Assessment />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/workouts" element={<Workouts />} />
+              <Route path="/nutrition" element={<Nutrition />} />
+              <Route path="/measurements" element={<Measurements />} />
+              <Route path="/evaluation" element={<Evaluation />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/referrals" element={<Referrals />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/exams" element={<Exams />} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+              <Route path="/coach/auth" element={<CoachAuth />} />
+              <Route path="/coach/dashboard" element={<CoachDashboard />} />
+              <Route path="/coach/students" element={<CoachStudents />} />
+              <Route path="/coach/student/:id" element={<CoachStudentProfile />} />
+              <Route path="/coach/student/:id/edit" element={<CoachStudentEdit />} />
+              <Route path="/coach/pending-plans" element={<CoachPendingPlans />} />
+              <Route path="/coach/ai-training" element={<CoachAITraining />} />
+              <Route path="/coach/progress" element={<CoachProgress />} />
+              <Route path="/coach/referrals" element={<CoachReferrals />} />
+              <Route path="/coach/ranking" element={<CoachRanking />} />
+              <Route path="/coach/settings" element={<CoachSettings />} />
+              <Route path="/coach/exercises" element={<CoachExercises />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
