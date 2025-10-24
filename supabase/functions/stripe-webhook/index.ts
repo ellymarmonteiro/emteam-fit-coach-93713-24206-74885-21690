@@ -48,13 +48,15 @@ serve(async (req) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log('Checkout completado:', session.id);
+        console.log('✅ Checkout completado:', session.id);
 
         const userId = session.metadata?.user_id;
         if (!userId) {
-          console.error('user_id não encontrado nos metadados');
+          console.error('❌ user_id não encontrado nos metadados');
           break;
         }
+
+        console.log('👤 Atualizando perfil do usuário:', userId);
 
         // Atualizar status da assinatura
         await supabaseClient
@@ -63,30 +65,85 @@ serve(async (req) => {
             subscription_status: 'active',
             stripe_subscription_id: session.subscription as string,
             current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            plan_status: 'pending'
           })
           .eq('id', userId);
+
+        console.log('✅ Perfil atualizado com sucesso');
 
         // Criar notificação
         await supabaseClient.rpc('create_notification', {
           p_user_id: userId,
-          p_message: '🎉 Pagamento confirmado! Estamos gerando seus planos personalizados. Você será notificado em até 48h.',
+          p_message: '🎉 Pagamento confirmado! Complete sua anamnese e avaliação física para que possamos gerar seus planos personalizados.',
           p_type: 'payment_success'
         });
 
-        // Disparar geração de planos
-        try {
-          const generatePlansUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-plans`;
-          await fetch(generatePlansUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-            },
-            body: JSON.stringify({ user_id: userId }),
-          });
-          console.log('Geração de planos iniciada para:', userId);
-        } catch (genError) {
-          console.error('Erro ao iniciar geração de planos:', genError);
+        console.log('📧 Notificação enviada');
+
+        // Verificar se anamnese e avaliação estão completas
+        const { data: anamnese } = await supabaseClient
+          .from('anamnese')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const { data: evaluation } = await supabaseClient
+          .from('evaluations')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        console.log('📋 Anamnese:', anamnese ? 'Completa' : 'Pendente');
+        console.log('📊 Avaliação:', evaluation ? 'Completa' : 'Pendente');
+
+        // Se tiver anamnese e avaliação, gerar planos automaticamente
+        if (anamnese && evaluation) {
+          console.log('🤖 Iniciando geração de planos...');
+          await supabaseClient
+            .from('profiles')
+            .update({ plan_status: 'generating' })
+            .eq('id', userId);
+
+          try {
+            const generatePlansUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-plans`;
+            const generateResponse = await fetch(generatePlansUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              },
+              body: JSON.stringify({ user_id: userId }),
+            });
+
+            if (!generateResponse.ok) {
+              const errorText = await generateResponse.text();
+              console.error('❌ Erro ao gerar planos:', errorText);
+              throw new Error(errorText);
+            }
+
+            console.log('✅ Planos gerados com sucesso');
+            
+            await supabaseClient.rpc('create_notification', {
+              p_user_id: userId,
+              p_message: '🎉 Seus planos foram gerados com sucesso! Aguarde aprovação do coach (até 48h).',
+              p_type: 'plan_generated'
+            });
+          } catch (genError) {
+            console.error('❌ Erro crítico ao gerar planos:', genError);
+            
+            await supabaseClient
+              .from('profiles')
+              .update({ plan_status: 'pending' })
+              .eq('id', userId);
+            
+            await supabaseClient.rpc('create_notification', {
+              p_user_id: userId,
+              p_message: '⚠️ Não foi possível gerar seus planos automaticamente. Nossa equipe irá criar manualmente em até 48h.',
+              p_type: 'system_error'
+            });
+          }
+        } else {
+          console.log('ℹ️ Aguardando anamnese e/ou avaliação');
         }
 
         break;

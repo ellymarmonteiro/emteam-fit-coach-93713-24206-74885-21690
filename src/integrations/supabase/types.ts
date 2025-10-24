@@ -260,6 +260,7 @@ export type Database = {
           thumbnail_path: string | null
           updated_at: string | null
           video_path: string | null
+          video_url: string | null
         }
         Insert: {
           category?: string | null
@@ -274,6 +275,7 @@ export type Database = {
           thumbnail_path?: string | null
           updated_at?: string | null
           video_path?: string | null
+          video_url?: string | null
         }
         Update: {
           category?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           thumbnail_path?: string | null
           updated_at?: string | null
           video_path?: string | null
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -669,6 +672,10 @@ export type Database = {
           p_workout_time: string
         }
         Returns: string
+      }
+      setup_coach_role: {
+        Args: { coach_email: string; coach_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
