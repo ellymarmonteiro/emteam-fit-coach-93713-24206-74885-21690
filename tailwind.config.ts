@@ -57,6 +57,11 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        emteam: {
+          orange: "hsl(24 100% 50%)",
+          dark: "hsl(0 0% 8%)",
+          gray: "hsl(0 0% 18%)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -85,8 +90,8 @@ export default {
           "100%": { transform: "scale(1)", opacity: "1" },
         },
         "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 20px hsl(263 70% 60% / 0.2)" },
-          "50%": { boxShadow: "0 0 40px hsl(263 70% 60% / 0.4)" },
+          "0%, 100%": { boxShadow: "0 0 20px hsl(24 100% 50% / 0.3)" },
+          "50%": { boxShadow: "0 0 40px hsl(24 100% 50% / 0.6)" },
         },
       },
       animation: {

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Apple, TrendingUp, Users, User, Gift, ClipboardCheck, Bell, AlertCircle } from "lucide-react";
+import { Activity, Apple, TrendingUp, Users, User, Gift, ClipboardCheck, Bell, AlertCircle, Bot } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Navbar from "@/components/Navbar";
@@ -224,6 +224,21 @@ const Dashboard = () => {
 
           {/* Quick Actions */}
           <div className="grid md:grid-cols-3 gap-4">
+            {/* Quick Actions */}
+            <Link to="/chat">
+              <Card className="glass-card hover:scale-105 transition-transform cursor-pointer">
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center mb-4">
+                    <Bot className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Chat com IA</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Converse sobre treinos e alimentação
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+
             <Link to="/workouts">
               <Card className="glass-card hover:scale-105 transition-transform cursor-pointer h-full">
                 <CardHeader>

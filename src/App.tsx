@@ -35,6 +35,8 @@ import NotFound from "./pages/NotFound";
 
 import CoachExercises from "./pages/coach/CoachExercises";
 
+import ChatWithCoach from "./pages/ChatWithCoach";
+
 const queryClient = new QueryClient();
 
 import { useEffect, useState } from "react";
@@ -91,6 +93,7 @@ const App = () => {
               <Route path="/onboarding/gender" element={<Gender />} />
               <Route path="/onboarding/assessment" element={<Assessment />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/chat" element={<ChatWithCoach />} />
               <Route path="/workouts" element={<Workouts />} />
               <Route path="/nutrition" element={<Nutrition />} />
               <Route path="/measurements" element={<Measurements />} />

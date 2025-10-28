@@ -10,11 +10,16 @@ const Home = () => {
         <div className="absolute inset-0 gradient-dark opacity-50"></div>
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center space-y-6 animate-fade-in-up">
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">
-              EMteam Digital
-            </h1>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-2xl font-bold text-primary-foreground">EM</span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-bold text-primary">
+                EMteam Digital
+              </h1>
+            </div>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Transforme seu corpo com tecnologia e acompanhamento inteligente
+              Plataforma de acompanhamento fitness com IA personalizada
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/auth">

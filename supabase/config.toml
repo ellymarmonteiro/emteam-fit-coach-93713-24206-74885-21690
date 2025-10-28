@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.get-exercise-video]
 verify_jwt = false
+
+[functions.ai-coach-chat]
+verify_jwt = true

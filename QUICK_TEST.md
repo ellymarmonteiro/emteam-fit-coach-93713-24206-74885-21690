@@ -1,135 +1,144 @@
-# 🚀 TESTE RÁPIDO - 5 Minutos
+# Teste Rápido do EMteam Digital
 
-Execute estes testes agora para validar as correções:
+## ✅ O que foi implementado
 
----
+### 1. Design System Completo
+- ✅ Cores EMteam: Laranja (#FF6B00), Preto, Cinza
+- ✅ Tema escuro como padrão
+- ✅ Design responsivo e moderno
 
-## ✅ TESTE 1: Login Coach (30 segundos)
+### 2. Integração com IA (Lovable AI)
+- ✅ Lovable AI habilitado (google/gemini-2.5-flash)
+- ✅ Edge function `ai-coach-chat` criada
+- ✅ Página de chat com IA (`/chat`)
+- ✅ Contexto personalizado baseado em perfil e anamnese
 
-```bash
-1. Abrir: /coach/auth
-2. Email: ellymarmonteiro@icloud.com
-3. Senha: jmmjjfje
-4. Clicar "Entrar"
+### 3. Estrutura de Navegação
+- ✅ Home page com branding EMteam
+- ✅ Sistema de autenticação (login/signup)
+- ✅ Dashboard do aluno com quick actions
+- ✅ Dashboard do coach (já existente)
+- ✅ Página de chat com IA
+
+### 4. Banco de Dados (Supabase)
+- ✅ Tabelas existentes:
+  - profiles (perfis de usuário)
+  - anamnese (dados de saúde)
+  - evaluations (avaliações físicas)
+  - plans (planos de treino/alimentação)
+  - exercises (exercícios com vídeos)
+  - user_roles (roles: coach/admin)
+  - subscriptions (já integrado com Stripe)
+
+### 5. Integrações Ativas
+- ✅ Supabase conectado
+- ✅ Stripe configurado (para checkout de assinaturas)
+- ✅ Lovable AI habilitado
+- ✅ OpenAI API Key configurada (caso necessário)
+
+## 🧪 Como Testar
+
+### Teste 1: Acesso à Home
+1. Abra a aplicação
+2. Verifique que a home exibe:
+   - Logo EMteam Digital (círculo laranja com "EM")
+   - Botões "Começar Agora" e "Login"
+   - Cards de features (Treinos, Nutrição, Acompanhamento)
+
+### Teste 2: Login/Cadastro
+1. Clique em "Começar Agora" ou "Login"
+2. Faça login com uma conta existente ou cadastre-se
+3. Após login:
+   - Se aluno → redireciona para `/dashboard`
+   - Se coach → redireciona para `/coach/dashboard`
+
+### Teste 3: Chat com IA (Aluno)
+1. Faça login como aluno
+2. No dashboard, clique no card "Chat com IA"
+3. Digite uma mensagem, exemplo: "Como devo fazer exercícios para ganhar massa?"
+4. Aguarde resposta da IA
+5. A IA deve responder de forma personalizada baseada nos dados do perfil
+
+### Teste 4: Fluxo de Assinatura
+1. Acesse `/subscription`
+2. Verifique o plano disponível
+3. Clique em "Assinar Agora"
+4. Você será redirecionado para o checkout do Stripe
+5. Após pagamento, o status deve ser atualizado
+
+### Teste 5: Coach Dashboard
+1. Faça login como coach (`ellymarmonteiro.personal@gmail.com`)
+   - **IMPORTANTE**: O usuário coach precisa ser criado manualmente seguindo `SETUP_COACH.md`
+2. Acesse `/coach/dashboard`
+3. Verifique:
+   - Lista de alunos
+   - Planos pendentes
+   - Exercícios cadastrados
+
+## 📋 Configurações Pendentes (Manuais)
+
+### 1. Criar Usuário Coach
+Siga as instruções em `SETUP_COACH.md`:
+1. Criar usuário no Supabase Auth com email `ellymarmonteiro.personal@gmail.com`
+2. Executar função `setup_coach_role` com o user_id
+
+### 2. Configurar Stripe Price ID
+No arquivo `src/pages/Subscription.tsx` (linha 23):
+```typescript
+const PRICE_ID = "price_XXXXX"; // Substituir pelo price_id real do Stripe
 ```
 
-**Resultado Esperado:**
-- ✅ Redirect para /coach/dashboard
-- ✅ Painel de coach visível
-- ✅ Sem erro de "Acesso negado"
+### 3. Configurar Webhook do Stripe (Opcional)
+Caso queira usar webhooks:
+1. Configurar endpoint no Stripe Dashboard
+2. Apontar para a função `stripe-webhook`
+3. Adicionar secret do webhook
 
-**Status:** [ ] OK  [ ] FALHOU
+## 🎯 Próximos Passos
 
----
+1. **Gerar Planos Automaticamente**
+   - A edge function `generate-plans` já existe
+   - Integrar com o webhook do Stripe ou botão manual
+   - A IA criará treino e dieta baseados na anamnese
 
-## ✅ TESTE 2: Verificar Roles no Banco (1 minuto)
+2. **Vídeos de Exercícios**
+   - Upload de vídeos para storage do Supabase
+   - Exibir vídeos no painel de treinos
 
-Execute via SQL Editor do Lovable Cloud:
+3. **Notificações Automáticas**
+   - Lembretes de treino
+   - Reavaliação mensal
+   - Mensagens motivacionais
 
-```sql
-SELECT p.email, p.full_name, ur.role 
-FROM profiles p
-LEFT JOIN user_roles ur ON p.id = ur.user_id
-WHERE p.email ILIKE '%ellymarmonteiro%';
-```
+4. **Dashboard do Coach Completo**
+   - Ver progresso detalhado de cada aluno
+   - Editar planos manualmente
+   - Chat interno com alunos
 
-**Resultado Esperado:**
-```
-email                          | full_name        | role
-ellymarmonteiro@icloud.com    | Ellymar Monteiro | admin
-ellymarmonteiro@icloud.com    | Ellymar Monteiro | coach
-```
+## 🚀 Status Atual
 
-**Status:** [ ] OK  [ ] FALHOU
+- ✅ Design system configurado com cores EMteam
+- ✅ Autenticação funcionando
+- ✅ IA integrada e funcional
+- ✅ Banco de dados estruturado
+- ✅ Stripe conectado
+- ⏳ Coach user precisa ser criado manualmente
+- ⏳ Price ID do Stripe precisa ser configurado
+- ⏳ Planos automáticos precisam ser testados
 
----
+## 🔧 Troubleshooting
 
-## ✅ TESTE 3: Tentar Checkout (2 minutos)
+### IA não responde
+- Verificar se o Lovable AI está habilitado
+- Verificar logs da edge function `ai-coach-chat`
+- Confirmar que o usuário está autenticado
 
-⚠️ **Pré-requisito:** Configurar `VITE_STRIPE_PRICE_ID` com um price ID real do Stripe
+### Erro no checkout Stripe
+- Verificar se STRIPE_SECRET_KEY está configurada
+- Verificar se o price_id está correto
+- Verificar logs da função `create-checkout-session`
 
-```bash
-1. Login como aluno qualquer
-2. Ir para: /subscription
-3. Clicar "Assinar Agora"
-4. Observar console do navegador
-```
-
-**Resultado Esperado:**
-- ✅ Console log: "🚀 Criando checkout session..."
-- ✅ Console log: "✅ Checkout session criada com sucesso!"
-- ✅ Console log: "Redirecionando para checkout: https://checkout.stripe..."
-- ✅ Página Stripe abre
-
-**Se der erro:**
-- Verificar logs da edge function em: Lovable Cloud > Functions > create-checkout-session
-
-**Status:** [ ] OK  [ ] FALHOU  [ ] PRICE_ID não configurado
-
----
-
-## ✅ TESTE 4: Verificar RLS (1 minuto)
-
-Execute via SQL Editor (logado como aluno):
-
-```sql
--- Deve retornar apenas seu próprio perfil
-SELECT * FROM profiles;
-```
-
-**Resultado Esperado:**
-- ✅ Retorna apenas 1 linha (seu perfil)
-- ✅ Não retorna outros usuários
-
-**Status:** [ ] OK  [ ] FALHOU
-
----
-
-## ✅ TESTE 5: Logs de Edge Function (30 segundos)
-
-```bash
-1. Abrir: Lovable Cloud Backend
-2. Ir para: Functions > create-checkout-session
-3. Ver: Logs recentes
-```
-
-**Verificar:**
-- ✅ Logs com emojis: 🚀 ✅ 📋
-- ✅ Detalhes de cada etapa
-- ✅ Sem mensagens de erro (❌)
-
-**Status:** [ ] OK  [ ] FALHOU
-
----
-
-## 📊 RESULTADO FINAL
-
-```
-Total de Testes: 5
-Passou: ___ / 5
-Falhou: ___ / 5
-
-Status: [ ] Todos OK  [ ] Alguns falharam  [ ] Não testado
-```
-
----
-
-## 🆘 SE ALGO FALHAR
-
-### Teste 1 Falhou (Login Coach):
-- Verificar se migration foi aplicada
-- Rodar query do Teste 2 para confirmar roles
-- Limpar cache do navegador
-
-### Teste 3 Falhou (Checkout):
-- Configurar VITE_STRIPE_PRICE_ID corretamente
-- Verificar STRIPE_SECRET_KEY nos secrets
-- Ver logs da edge function
-
-### Teste 4 Falhou (RLS):
-- Policies podem não estar ativas
-- Verificar com admin user
-
----
-
-**Após executar:** Preencher status de cada teste e reportar resultados.
+### Usuário não consegue acessar dashboard
+- Verificar se completou cadastro
+- Verificar se tem assinatura ativa
+- Verificar se preencheu anamnese e avaliação
