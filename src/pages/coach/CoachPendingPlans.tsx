@@ -75,42 +75,32 @@ const CoachPendingPlans = () => {
 
   const approvePlan = async (planId: string, userId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      // Atualizar status do plano
-      const { error: planError } = await supabase
-        .from('plans')
-        .update({
-          status: 'approved',
-          approved_at: new Date().toISOString(),
-          approved_by: user.id
-        })
-        .eq('id', planId);
-
-      if (planError) throw planError;
-
-      // Atualizar status no perfil do aluno
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ plan_status: 'approved' })
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
-
-      // Criar notificação para o aluno
-      await supabase.rpc('create_notification', {
-        p_user_id: userId,
-        p_message: '🎯 Seu plano foi aprovado pelo seu coach e já está disponível! Vamos começar? 💪',
-        p_type: 'plan_approved'
+      console.log('Aprovando plano:', planId);
+      
+      const { data, error } = await supabase.functions.invoke('coach-approve-plan', {
+        body: { 
+          plan_id: planId,
+          action: 'approve'
+        }
       });
 
-      toast.success('Plano aprovado com sucesso!');
-      loadPendingPlans();
-      setSelectedPlan(null);
-    } catch (error) {
+      if (error) {
+        console.error('Erro ao aprovar plano:', error);
+        throw error;
+      }
+
+      console.log('Plano aprovado com sucesso:', data);
+      toast.success('✅ Plano aprovado com sucesso!');
+      
+      // Aguardar um pouco antes de recarregar
+      setTimeout(() => {
+        loadPendingPlans();
+        setSelectedPlan(null);
+      }, 500);
+    } catch (error: any) {
       console.error('Erro ao aprovar plano:', error);
-      toast.error('Erro ao aprovar plano');
+      const errorMessage = error?.message || 'Erro desconhecido';
+      toast.error(`Erro ao aprovar plano: ${errorMessage}`);
     }
   };
 
